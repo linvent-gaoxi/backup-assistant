@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文件备份助手 · Ubuntu</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2f5fa;color:#192940;font:15px system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:1010px;margin:36px auto;padding:0 18px;display:grid;grid-template-columns:170px 1fr;gap:22px}
+aside{padding:12px 0}aside h1{font-size:23px;margin:0 0 6px}small,p{color:#52657f}nav{display:grid;gap:7px;margin-top:25px}
+button{font:inherit;color:#233855;background:white;border:1px solid #d8e1ed;border-radius:8px;padding:9px 14px;cursor:pointer}
+nav button{text-align:left;background:transparent;border-color:transparent}nav button.active{background:#e0eafe;color:#2252bd;font-weight:650}
+section,footer{background:white;border:1px solid #e3eaf3;border-radius:13px;padding:23px;margin-bottom:14px}
+h2{font-size:23px;margin:0 0 6px}p{margin:7px 0 16px}form{display:grid;gap:11px}label{display:grid;gap:5px}
+input,select{font:inherit;width:100%;padding:9px;border:1px solid #cdd8e6;border-radius:7px;color:inherit;background:white}
+input[type=checkbox]{width:auto}label.check{display:flex;align-items:center;gap:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}.primary{background:#2659c7;color:white;border-color:#2659c7}
+details{padding:10px 0}details .grid{margin-top:10px}summary{cursor:pointer;color:#2659c7}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 0;font:14px system-ui;line-height:1.55}
+.row{border-top:1px solid #e3eaf3;padding:10px 0;overflow-wrap:anywhere}.row button{margin-top:6px}
+header{display:flex;align-items:center;justify-content:space-between}button:disabled{opacity:.5;cursor:wait}
+@media(max-width:700px){main{display:block;margin:14px auto}nav{display:flex;flex-wrap:wrap;margin-top:12px}.grid{grid-template-columns:1fr}}
+</style>
+<main>
+<aside><h1>文件备份助手</h1><small>Ubuntu · 本机控制台</small>
+<nav><button data-page="backup" class="active">创建备份</button><button data-page="restore">还原与检查</button><button data-page="auto">自动备份</button><button data-page="network">网络备份</button></nav></aside>
+<article>
+<section id="backup"><h2>创建备份</h2><p>把文件夹保存为一份可还原的归档。</p>
+<form data-action="backup">
+<label>源文件夹<input name="source" required placeholder="/mnt/c/Users/…/示例资料"></label>
+<label>保存位置<input name="archive" required placeholder="/home/…/资料.sbackup"></label>
+<div class="grid"><label class="check"><input name="compression" type="checkbox" checked>Huffman 压缩</label><label>归档密码（选填）<input name="password" type="password" autocomplete="new-password"></label></div>
+<details><summary>筛选条件</summary><div class="grid">
+<label>文件名<input name="name" placeholder="例如 实验*"></label><label>相对路径<input name="path" placeholder="例如 课程讲义/*"></label>
+<label>扩展名<input name="extensions" placeholder="例如 pdf,txt"></label><label>最小字节数<input name="min-size" type="number" min="0"></label>
+<label>最大字节数<input name="max-size" type="number" min="0"></label><span></span>
+<label>最早修改日期<input name="after" type="date"></label><label>最晚修改日期<input name="before" type="date"></label>
+</div></details><div class="actions"><button class="primary">开始备份</button></div>
+</form></section>
+<section id="restore" hidden><h2>还原与检查</h2><p>检查归档完整性，或还原到已有目录下的新子目录。</p>
+<form data-action="restore">
+<label>备份文件<input name="archive" required></label><label>还原位置<input name="destination"></label>
+<label>归档密码（加密备份需要）<input name="password" type="password" autocomplete="off"></label>
+<div class="actions"><button class="primary">开始还原</button><button data-action="inspect">仅检查备份</button></div>
+</form></section>
+<section id="auto" hidden><h2>自动备份</h2><p>保持 Ubuntu 中的控制台服务运行。实时任务检测到变化后，等待文件稳定再备份。</p>
+<form data-action="job">
+<div class="grid"><label>触发方式<select name="mode"><option value="schedule">定时备份</option><option value="watch">文件变化自动备份</option></select></label>
+<label>周期 / 稳定等待（秒）<input name="period" type="number" min="5" max="604800" value="60" required></label></div>
+<label>源文件夹<input name="source" required></label><label>备份保存目录<input name="output" required></label>
+<label>保留最近多少份<input name="keep" type="number" min="1" max="100" value="3" required></label>
+<div class="actions"><button class="primary">添加任务</button></div>
+</form><div id="jobs"></div></section>
+<section id="network" hidden><h2>网络备份</h2><p>上传归档到 HTTPS 仓库，或从版本列表选择备份还原。同账号已有的数据块会跳过上传。</p>
+<form data-action="upload" id="remote">
+<div class="grid"><label>HTTPS 地址<input name="url"></label><label>账号<input name="user"></label>
+<label>访问令牌（本机演示可留空）<input name="token" type="password" autocomplete="off"></label><label>CA 证书路径（可选）<input name="ca"></label></div>
+<label>要上传的归档<input name="archive"></label>
+<div class="actions"><button class="primary">上传归档</button><button data-action="versions">刷新远端版本</button></div>
+<div id="versions"></div>
+<div class="grid"><label>选中的版本<input name="version" readonly></label><label>还原位置<input name="destination"></label></div>
+<label>归档密码（加密备份需要）<input name="password" type="password" autocomplete="off"></label>
+<div class="actions"><button data-action="download">下载并还原</button></div>
+</form></section>
+<footer><header><strong>任务状态</strong><button id="copy">复制状态</button></header><pre id="status" aria-live="polite">就绪</pre></footer>
+</article></main>
+<script>
+const statusBox=document.querySelector('#status');
+const statusText=text=>{if(statusBox.textContent!==text)statusBox.textContent=text};
+let localError='',jobCache='',remoteInitialized=false;
+async function api(action,data){
+ const options={headers:{'X-Backup-Console':'1'}};
+ if(data!==undefined){options.method='POST';options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
+ const response=await fetch('/api/'+action,options), result=await response.json();
+ if(!response.ok)throw Error(result.error);
+ return result;
+}
+function row(parent,message,caption,click){
+ const entry=document.createElement('div');entry.className='row';
+ const label=document.createElement('div');label.textContent=message;entry.append(label);
+ const button=document.createElement('button');button.type='button';button.textContent=caption;button.onclick=click;entry.append(button);
+ parent.append(entry);
+}
+async function refresh(){
+ try{
+  const state=await api('state');
+  if(!localError)statusText(state.status);
+  document.querySelectorAll('button.primary').forEach(button=>button.disabled=state.busy);
+  if(!remoteInitialized){
+   for(const key of ['url','user','ca'])document.querySelector('#remote').elements[key].value=state.remote[key];
+   const backup=document.querySelector('#backup form').elements;
+   backup.source.value=state.example.source;
+   backup.archive.value=state.example.output+'/demo-'+Date.now()+'.sbackup';
+   document.querySelector('#restore form').elements.destination.value=state.example.destination;
+   document.querySelector('#remote').elements.destination.value=state.example.destination;
+   remoteInitialized=true;
+  }
+  if(jobCache!==JSON.stringify(state.jobs)){
+   jobCache=JSON.stringify(state.jobs);const jobs=document.querySelector('#jobs');jobs.replaceChildren();
+   for(const job of state.jobs)row(jobs,(job.mode==='watch'?'变化触发':'定时')+' · '+job.period+' 秒 · 保留 '+job.keep+' 份 · '+job.source+' · '+job.status,
+    '移除任务',async()=>{try{await api('remove',{id:job.id});await refresh()}catch(error){statusText(error.message)}});
+  }
+ }catch(error){statusText('无法连接 Ubuntu 服务：'+error.message)}
+}
+document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>{
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b===button));
+ document.querySelectorAll('section').forEach(section=>section.hidden=section.id!==button.dataset.page);
+});
+document.querySelectorAll('form').forEach(form=>form.onsubmit=async event=>{
+ event.preventDefault();localError='';
+ const action=event.submitter?.dataset.action||form.dataset.action;
+ const data=Object.fromEntries(new FormData(form));
+ if(form.elements.compression)data.compression=form.elements.compression.checked;
+ try{
+  const result=await api(action,data);
+  if(action==='versions'){
+   const versions=document.querySelector('#versions');versions.replaceChildren();
+   if(!result.length)versions.textContent='远端暂无备份';
+   for(const v of result)row(versions,v.name+' · '+v.bytes.toLocaleString()+' 字节 · '+v.id,'选择',()=>form.elements.version.value=v.id);
+  }
+  if(action==='backup'){
+   document.querySelector('#restore form').elements.archive.value=data.archive;
+   document.querySelector('#remote').elements.archive.value=data.archive;
+  }
+  if(form.elements.password)form.elements.password.value='';
+  await refresh();
+ }catch(error){localError=error.message;statusText('失败：'+localError)}
+});
+document.querySelector('#copy').onclick=async event=>{
+ try{await navigator.clipboard.writeText(statusBox.textContent);event.target.textContent='已复制';setTimeout(()=>event.target.textContent='复制状态',1200)}
+ catch{const selection=window.getSelection(), range=document.createRange();range.selectNodeContents(statusBox);selection.removeAllRanges();selection.addRange(range)}
+};
+refresh();setInterval(refresh,1500);
+</script>
+</html>
