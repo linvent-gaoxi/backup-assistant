@@ -1,0 +1,50 @@
+PASS CRC32 standard vector
+PASS Huffman empty input
+PASS Huffman one symbol
+PASS Huffman all byte values
+PASS Huffman random raw fallback
+PASS Huffman skewed distribution
+PASS Huffman rejects truncation
+PASS Huffman rejects invalid mode
+PASS Huffman rejects invalid frequency
+PASS Size and date validation
+PASS Filter filename wildcard
+PASS Filter relative path
+PASS Filter multiple extensions
+PASS Filter size boundaries
+PASS Filter date boundaries
+PASS Filter combined AND and invalid ranges
+PASS Unicode tree empty file and empty directory
+PASS Cross-block binary exact round trip
+PASS Uncompressed archive round trip
+PASS Empty source directory
+PASS Five filters integrated
+PASS Preserve file directory and root timestamps
+PASS Preserve read-only attribute
+PASS Reject archive inside source
+PASS Reject existing archive without replacing
+PASS Reject existing restore directory
+PASS Reject missing source and destination
+PASS Encrypted multi-block correct password
+PASS Encrypted wrong and missing password leave no output
+PASS Reject short encryption password
+PASS Encryption randomized for same input
+PASS Encrypted tampering rejected
+PASS Encrypted terminal record truncation rejected
+PASS Encrypted appended data rejected
+PASS Inspect validates contents without restore output
+PASS Raw checksum rejects data and metadata tampering
+PASS Reject truncated archive
+PASS Reject path traversal after valid checksum
+PASS Reject absolute path and alternate stream
+PASS Reject duplicate root entry
+PASS Reject file directory conflict
+PASS Reject trailing plaintext data with valid checksum
+PASS Reject locked source file and remove temporary files
+PASS Progress callback records file count and completion
+PASS Reject source symbolic link
+  METRIC large bytes=16777216 archive=16713 backup_ms=87 restore_ms=564
+PASS Performance repetitive 16MiB
+  METRIC small files=1000 bytes=128000 archive=172977 backup_ms=302 restore_ms=620
+PASS Performance 1000 small files
+RESULT passed=47 failed=0 skipped=0
